@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buildi 3D Studio</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }
+    </style>
+</head>
+<body>
+
+    <h1>Buildi 3D Studio Hoş Geldiniz!</h1>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log('Service Worker yüklendi!'));
+        }
+    </script>
+</body>
+</html>
