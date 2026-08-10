@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Buildi - Stüdyo</title>
+    <!-- Güvenlik: XSS ve Zararlı Script Enjeksiyonlarına Karşı CSP (Content Security Policy) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval';">
+    <title>Buildi - Güvenli Stüdyo</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #111; font-family: sans-serif; touch-action: none; }
         canvas { display: block; }
@@ -42,9 +44,10 @@
         <button class="action-btn" onclick="exportAsZip('fbx')" style="background:#cc00ff; color:white">FBX Klasör İndir (.zip)</button>
         
         <div class="section-title">İşlemler</div>
-        <button class="action-btn" onclick="deleteSelectedObject()" style="background:#ff3333; color:white">Sil</button>
+        <button class="action-btn" onclick="deleteSelectedObject()" style="background:#ff3333; color:white">Sil (Belleği Temizle)</button>
     </div>
 
+    <!-- Güvenli CDN Kaynakları -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js"></script>
@@ -134,7 +137,6 @@
             if(!selectedObject) return;
             
             if(type === 'glow') {
-                // Eğer zaten glow varsa kapat/aç yapalım ya da parlatalım
                 if(selectedObject.material.emissive.getHex() === 0x00ffff) {
                     selectedObject.material.emissive.setHex(0x000000);
                 } else {
@@ -149,9 +151,21 @@
             }
         }
 
+        // Güvenlik & Bellek Sızıntısı Koruması: Silinen nesnelerin RAM'den tamamen temizlenmesi (Dispose)
         function deleteSelectedObject() {
             if(selectedObject) { 
                 scene.remove(selectedObject); 
+                
+                // Geometri ve materyalleri bellekten düşür
+                if (selectedObject.geometry) selectedObject.geometry.dispose();
+                if (selectedObject.material) {
+                    if (Array.isArray(selectedObject.material)) {
+                        selectedObject.material.forEach(mat => mat.dispose());
+                    } else {
+                        selectedObject.material.dispose();
+                    }
+                }
+
                 objects = objects.filter(o => o !== selectedObject); 
                 selectedObject = null; 
                 handlesGroup.clear(); 
@@ -162,9 +176,10 @@
             let fileName = prompt("Zip dosyasının adını girin (Örn: projem.zip):", "buildi_proje.zip");
             if (!fileName) return;
 
+            // Güvenlik Kontrolü: Dosya adının güvenli olup olmadığını ve .zip ile bittiğini denetle
+            fileName = fileName.replace(/[^a-zA-Z0-9_\-\.]/g, '_'); // Zararlı karakterleri temizle
             if (!fileName.endsWith('.zip')) {
-                alert("adının sonuna .zip koyun!");
-                return;
+                fileName += '.zip';
             }
 
             let folderName = fileName.slice(0, -4);
