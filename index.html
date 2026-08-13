@@ -105,10 +105,28 @@
         document.getElementById('appBox').classList.toggle('hidden', !user);
     });
 
-    document.getElementById('addBtn').onclick = () => document.getElementById('threeDBox').classList.remove('hidden');
-    document.getElementById('signupBtn').onclick = () => createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value).catch(e => alert(e.message));
-    document.getElementById('loginBtn').onclick = () => signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value).catch(e => alert(e.message));
+    // Giriş ve Kayıt İşlemleri (Garanti Yöntem)
+    document.getElementById('loginBtn').onclick = function() {
+        const emailInput = document.getElementById('email').value;
+        const passInput = document.getElementById('password').value;
+        if (!emailInput || !passInput) { alert("E-posta ve şifre girin!"); return; }
+
+        signInWithEmailAndPassword(auth, emailInput, passInput)
+            .catch((error) => { alert("Giriş Hatası: " + error.code); });
+    };
+
+    document.getElementById('signupBtn').onclick = function() {
+        const emailInput = document.getElementById('email').value;
+        const passInput = document.getElementById('password').value;
+        if (!emailInput || !passInput) { alert("E-posta ve şifre girin!"); return; }
+
+        createUserWithEmailAndPassword(auth, emailInput, passInput)
+            .then(() => { alert("Kayıt başarılı!"); })
+            .catch((error) => { alert("Kayıt Hatası: " + error.code); });
+    };
+
     document.getElementById('logoutBtn').onclick = () => signOut(auth);
+    document.getElementById('addBtn').onclick = () => document.getElementById('threeDBox').classList.remove('hidden');
 
     function animate() { requestAnimationFrame(animate); renderer.render(scene, camera); }
     animate();
