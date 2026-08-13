@@ -27,46 +27,91 @@
     <h2>Buildi</h2>
     <input type="email" id="email" placeholder="E-posta">
     <input type="password" id="password" placeholder="Şifre">
-    <button id="loginBtn">Giriş Yap</button>
-    <button id="signupBtn">Kayıt Ol</button>
+    <button id="loginBtn" type="button">Giriş Yap</button>
+    <button id="signupBtn" type="button">Kayıt Ol</button>
 </div>
 
 <!-- Panel Ekranı -->
 <div class="container hidden" id="appBox">
     <h2>Buildi Paneli</h2>
-    <button id="logoutBtn">Çıkış Yap</button>
-    <button id="addBtn">+</button>
+    <button id="logoutBtn" type="button">Çıkış Yap</button>
+    <button id="addBtn" type="button">+</button>
 </div>
 
 <!-- 3D Sahne Ekranı -->
 <div id="threeDBox" class="hidden">
     <div id="sideMenu">
         <h3>Menu</h3>
-        <button onclick="addCube()" style="background:#444;">+ Küp Ekle</button>
-        <button onclick="alert('Efektler Yakında')" style="background:#444;">Efektler</button>
-        <button onclick="alert('Dışa Aktarılıyor')" style="background:#444;">Dışa Aktar</button>
-        <button onclick="deleteSelected()" style="background:#dc3545;">Sil</button>
+        <button id="addCubeBtn" type="button" style="background:#444;">+ Küp Ekle</button>
+        <button onclick="alert('Efektler Yakında')" type="button" style="background:#444;">Efektler</button>
+        <button onclick="alert('Dışa Aktarılıyor')" type="button" style="background:#444;">Dışa Aktar</button>
+        <button id="deleteBtn" type="button" style="background:#dc3545;">Sil</button>
         <hr style="width:100%">
-        <button onclick="document.getElementById('threeDBox').classList.add('hidden')" style="background:#555;">Kapat</button>
+        <button onclick="document.getElementById('threeDBox').classList.add('hidden')" type="button" style="background:#555;">Kapat</button>
     </div>
 </div>
 
 <script type="module">
-    import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
-    import { TransformControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/TransformControls.js';
-    import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    
+    import * as THREE from 'https://esm.sh/three@0.160.0';
+    import { OrbitControls } from 'https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+    import { TransformControls } from 'https://esm.sh/three@0.160.0/examples/jsm/controls/TransformControls.js';
 
     // Firebase Ayarları
-    const firebaseConfig = { apiKey: "AIzaSyD4aZLmTWyPEZCkUsA8SdKVU6_xJ0qv0HA", authDomain: "buildi-86fe0.firebaseapp.com", projectId: "buildi-86fe0", storageBucket: "buildi-86fe0.firebasestorage.app", messagingSenderId: "291512419220", appId: "1:291512419220:web:d5c4961e0dcd55de00c581" };
-    initializeApp(firebaseConfig);
-    const auth = getAuth();
+    const firebaseConfig = { 
+        apiKey: "AIzaSyD4aZLmTWyPEZCkUsA8SdKVU6_xJ0qv0HA", 
+        authDomain: "buildi-86fe0.firebaseapp.com", 
+        projectId: "buildi-86fe0", 
+        storageBucket: "buildi-86fe0.firebasestorage.app", 
+        messagingSenderId: "291512419220", 
+        appId: "1:291512419220:web:d5c4961e0dcd55de00c581" 
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Giriş/Kayıt DOM Bağlantıları
+    const loginBtn = document.getElementById('loginBtn');
+    const signupBtn = document.getElementById('signupBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const addBtn = document.getElementById('addBtn');
+
+    loginBtn.addEventListener('click', () => {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        if (!email || !password) { alert("Lütfen alanları doldurun!"); return; }
+
+        signInWithEmailAndPassword(auth, email, password)
+            .catch(err => alert("Giriş Hatası: " + err.message));
+    });
+
+    signupBtn.addEventListener('click', () => {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        if (!email || !password) { alert("Lütfen alanları doldurun!"); return; }
+
+        createUserWithEmailAndPassword(auth, email, password)
+            .then(() => alert("Kayıt başarılı! Şimdi giriş yapabilirsiniz."))
+            .catch(err => alert("Kayıt Hatası: " + err.message));
+    });
+
+    logoutBtn.addEventListener('click', () => signOut(auth));
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.getElementById('authBox').classList.add('hidden');
+            document.getElementById('appBox').classList.remove('hidden');
+        } else {
+            document.getElementById('authBox').classList.remove('hidden');
+            document.getElementById('appBox').classList.add('hidden');
+        }
+    });
 
     // 3D Sahne Kurulumu
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.getElementById('threeDBox').appendChild(renderer.domElement);
     camera.position.set(0, 2, 5);
@@ -77,20 +122,21 @@
     control.addEventListener('dragging-changed', (e) => orbit.enabled = !e.value);
 
     let objects = [];
-    window.addCube = () => {
+
+    document.getElementById('addCubeBtn').addEventListener('click', () => {
         const cube = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshNormalMaterial());
         scene.add(cube);
         objects.push(cube);
         control.attach(cube);
-    };
+    });
 
-    window.deleteSelected = () => {
+    document.getElementById('deleteBtn').addEventListener('click', () => {
         if (control.object) {
             scene.remove(control.object);
             objects = objects.filter(obj => obj !== control.object);
             control.detach();
         }
-    };
+    });
 
     window.addEventListener('pointerdown', (e) => {
         if(e.clientX < 140) return;
@@ -100,38 +146,12 @@
         if(intersects.length > 0) control.attach(intersects[0].object);
     });
 
-    onAuthStateChanged(auth, (user) => {
-        document.getElementById('authBox').classList.toggle('hidden', !!user);
-        document.getElementById('appBox').classList.toggle('hidden', !user);
-    });
+    addBtn.addEventListener('click', () => document.getElementById('threeDBox').classList.remove('hidden'));
 
-    // Giriş ve Kayıt İşlemleri (Test uyarısı dahil)
-    document.getElementById('loginBtn').onclick = function() {
-        alert("Butona tıklandı!");
-        
-        const emailInput = document.getElementById('email').value;
-        const passInput = document.getElementById('password').value;
-        if (!emailInput || !passInput) { alert("E-posta ve şifre girin!"); return; }
-
-        signInWithEmailAndPassword(auth, emailInput, passInput)
-            .then(() => { alert("Giriş başarılı!"); })
-            .catch((error) => { alert("Firebase Hatası: " + error.message); });
-    };
-
-    document.getElementById('signupBtn').onclick = function() {
-        const emailInput = document.getElementById('email').value;
-        const passInput = document.getElementById('password').value;
-        if (!emailInput || !passInput) { alert("E-posta ve şifre girin!"); return; }
-
-        createUserWithEmailAndPassword(auth, emailInput, passInput)
-            .then(() => { alert("Kayıt başarılı!"); })
-            .catch((error) => { alert("Kayıt Hatası: " + error.message); });
-    };
-
-    document.getElementById('logoutBtn').onclick = () => signOut(auth);
-    document.getElementById('addBtn').onclick = () => document.getElementById('threeDBox').classList.remove('hidden');
-
-    function animate() { requestAnimationFrame(animate); renderer.render(scene, camera); }
+    function animate() { 
+        requestAnimationFrame(animate); 
+        renderer.render(scene, camera); 
+    }
     animate();
 </script>
 </body>
