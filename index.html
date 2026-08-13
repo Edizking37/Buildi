@@ -105,14 +105,17 @@
         document.getElementById('appBox').classList.toggle('hidden', !user);
     });
 
-    // Giriş ve Kayıt İşlemleri (Garanti Yöntem)
+    // Giriş ve Kayıt İşlemleri (Test uyarısı dahil)
     document.getElementById('loginBtn').onclick = function() {
+        alert("Butona tıklandı!");
+        
         const emailInput = document.getElementById('email').value;
         const passInput = document.getElementById('password').value;
         if (!emailInput || !passInput) { alert("E-posta ve şifre girin!"); return; }
 
         signInWithEmailAndPassword(auth, emailInput, passInput)
-            .catch((error) => { alert("Giriş Hatası: " + error.code); });
+            .then(() => { alert("Giriş başarılı!"); })
+            .catch((error) => { alert("Firebase Hatası: " + error.message); });
     };
 
     document.getElementById('signupBtn').onclick = function() {
@@ -122,7 +125,7 @@
 
         createUserWithEmailAndPassword(auth, emailInput, passInput)
             .then(() => { alert("Kayıt başarılı!"); })
-            .catch((error) => { alert("Kayıt Hatası: " + error.code); });
+            .catch((error) => { alert("Kayıt Hatası: " + error.message); });
     };
 
     document.getElementById('logoutBtn').onclick = () => signOut(auth);
